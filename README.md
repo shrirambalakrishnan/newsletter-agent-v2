@@ -1,4 +1,4 @@
-# newsletter-agent
+# newsletter-agent-v2
 
 Reading newsletters made easy!
 
@@ -78,7 +78,7 @@ Enable required services in GCP project
 
 ```
 gcloud services enable run.googleapis.com firestore.googleapis.com \
-    generativelanguage.googleapis.com secretmanager.googleapis.com \
+    aiplatform.googleapis.com \
     cloudbuild.googleapis.com artifactregistry.googleapis.com
 ```
 
@@ -87,39 +87,20 @@ gcloud services enable run.googleapis.com firestore.googleapis.com \
 Update the `default` Service Account for your GCP Project with access to the following
 - Cloud Build Service Account
 - Cloud Datastore User
-
-### Step 4
-
-Create a secret in "Secret Manager" with
-- Key = GOOGLE_API_KEY
-- Value = YOUR_GEMINI_API_KEY
-
-### Step 5
-
-Get project number
-```
-gcloud projects describe YOUR_PROJECT_ID --format="value(projectNumber)"
-```
-
-Now, grant secret read access
-```
-gcloud secrets add-iam-policy-binding GOOGLE_API_KEY \
---member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
---role="roles/secretmanager.secretAccessor" \
---project=YOUR_PROJECT_ID
-```
+- Vertex AI User
 
 ### Step 6
+
 ```bash
-gcloud run deploy newsletter-agent \
-  --source . \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --timeout=600 \
-  --max-instances=1 \
-  --concurrency=1 \
-  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=false,GOOGLE_GENAI_USE_ENTERPRISE=false,GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,FIRESTORE_DATABASE_ID=YOUR_DATABASE_ID,GEMINI_MODEL=gemini-3.5-flash \
-  --set-secrets GOOGLE_API_KEY=GOOGLE_API_KEY:latest
+gcloud run deploy newsletter-agent-v2 \
+    --source . \
+    --project newsletter-agent-v2 \
+    --region us-central1 \
+    --allow-unauthenticated \
+    --timeout=600 \
+    --max-instances=1 \
+    --concurrency=1 \
+    --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=newsletter-agent-v2,GOOGLE_CLOUD_LOCATION=global,FIRESTORE_DATABASE_ID=newsletter-agent-v2-db,GEMINI_MODEL=gemini-3.6-flash
 ```
 
 In the above command, update YOUR_PROJECT_ID and YOUR_DATABASE_ID with your values
