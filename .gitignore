@@ -7,3 +7,5 @@ newsletters-contents
 .DS_Store
 
 db/smoke-test*.ts
+
+agent.mjs
