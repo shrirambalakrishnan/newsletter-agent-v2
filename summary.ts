@@ -1,9 +1,10 @@
 import "dotenv/config"
 import {LlmAgent} from '@google/adk';
+import { model } from './model';
 
 export const summaryAgent = new LlmAgent({
   name: 'summary_agent',
-  model: process.env.GEMINI_MODEL,
+  model,
   description: 'Summarizes newsletters.',
   instruction: [
     'Summarize the newsletter user provides.',
