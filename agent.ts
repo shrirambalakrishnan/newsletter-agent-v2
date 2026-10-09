@@ -3,7 +3,9 @@ import {JoinNode, NodeContext, Workflow} from '@google/adk';
 import { summaryAgent } from "./summary";
 import { createNewsletter, newNewsletterId, Newsletter } from "./db/models/newsletter";
 import { Timestamp } from "@google-cloud/firestore";
-import { conceptExtractionAgent } from "./concept-extraction";
+import { conceptExtractionAgent, conceptExtractionOutputSchema } from "./concept-extraction";
+import { listConcepts } from "./db/models/concept";
+import { conceptResolutionAgent, conceptResolutionOutputSchema, persistNewConcepts } from "./concept-resolution";
 
 // async function ingest(_ctx: NodeContext, input: unknown) {
 //   const newsletterText = typeof input == "string" ? input.trim() : ""
@@ -61,13 +63,30 @@ async function result(_ctx: NodeContext, input: unknown) {
   })
 }
 
+async function buildInputForConceptResolutionAgent(_ctx: NodeContext, input: unknown) {
+  const extraction = conceptExtractionOutputSchema.parse(input)
+  const existingConcepts = await listConcepts()
+
+  return {
+    candidates: extraction.concepts,
+    existingConcepts: existingConcepts.map( c => ({conceptId: c.conceptId, label: c.label}))
+  }
+}
+
+async function persistResolvedConcepts(_ctx: NodeContext, input: unknown) {
+  const resolutionResponse = conceptResolutionOutputSchema.parse(input)
+  await persistNewConcepts(resolutionResponse.resolvedConcepts)
+
+  return resolutionResponse
+}
+
 export const rootAgent = new Workflow({
   name: "newsletter_agent",
   description: "Ingest newletter: summarise, extract concepts and generate quiz. Returns quizId and summary as JSON",
   edges: [ 
     [ "START", [summaryAgent, conceptExtractionAgent]  ],
     [summaryAgent, persistNewsletter, join],
-    [conceptExtractionAgent, join],
+    [conceptExtractionAgent, buildInputForConceptResolutionAgent, conceptResolutionAgent, persistResolvedConcepts, join],
     [join, result]
   ]
 })
