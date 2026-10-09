@@ -7,6 +7,7 @@ import { renderHomePage, renderQuizPage } from "./render"
 import { parseAnswers } from "./db/models/answer"
 import { applyAnswers, createAttempt } from "./db/models/Attempt"
 import { getNewsletter } from "./db/models/newsletter"
+import { ingestViaAgent } from "./agent-client"
 
 const app = express()
 app.use((req, _res, next) => {
@@ -37,8 +38,8 @@ app.post("/api/newsletter", async(req, res) => {
   }
 
   try {
-    const {newsletter, concepts, questions, quiz} = await ingestNewsletter(content)
-    res.json({quizId: quiz.id, concepts, questions, newsletter})
+    const result = await ingestViaAgent(content)
+    res.json(result)
   } catch (err) {
     console.error("ingest failed", err)
     res.status(500).json({error: String(err)})
@@ -121,10 +122,10 @@ app.post("/newsletter", async(req, res) => {
   }
 
   console.log("ingest starting, chars = ", content.length)
-  const {quiz} = await ingestNewsletter(content)
-  console.log("ingest done. quiz = ", quiz.id)
+  const {quizId} = await ingestViaAgent(content)
+  console.log("ingest done. quizId = ", quizId)
 
-  res.redirect(303, `/quiz/${quiz.id}`)
+  res.redirect(303, `/quiz/${quizId}`)
 })
 
 app.use((req, res) => {

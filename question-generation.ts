@@ -1,5 +1,6 @@
 import "dotenv/config"
 import { LlmAgent } from "@google/adk";
+import { model } from "./model"
 import z, { string } from "zod";
 import { newQuestionId, Question } from "./db/models/question";
 
@@ -29,7 +30,7 @@ export type GeneratedQuestion = z.infer<typeof generatedQuestionSchema>
 
 export const questionGenerationAgent = new LlmAgent({
   name: "question_generation_agent",
-  model: process.env.GEMINI_MODEL,
+  model,
   description: "Write one multiple choice question for each of the concept taugh in newsletter",
   instruction: [
     "You will receive a JSON object with two fields: newsletterContent and concepts. newsletterContent is the content of newsletter the user has just read. concepts are the the concepts that newsletter teaches. Each concept has conceptId, lable, and an evidence passage taken from newsletter",

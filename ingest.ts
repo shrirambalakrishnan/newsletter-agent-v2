@@ -10,6 +10,7 @@ import { SEED_USER, setDefaultUser } from "./db/models/user"
 import { rootAgent } from "./agent"
 import { createNewsletter, newNewsletterId, Newsletter } from "./db/models/newsletter"
 import { Timestamp } from "@google-cloud/firestore"
+import { summaryAgent } from "./summary"
 
 type ConceptResolutionOutputSchemaType = z.infer<typeof conceptResolutionOutputSchema>
 
@@ -25,7 +26,7 @@ async function summariseNewsletter(newsletterText: string): Promise<Newsletter> 
   
   // step 0
   const summary = await runAgentText(
-    rootAgent,
+    summaryAgent,
     newsletterText,
   )
   console.log("summary generated")
