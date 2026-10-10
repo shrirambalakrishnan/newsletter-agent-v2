@@ -4,7 +4,7 @@ Reading newsletters made easy!
 
 ## Live Demo URL
 
-https://newsletter-agent-602281895803.us-central1.run.app/
+https://newsletter-agent-v2-122813036535.us-central1.run.app
 
 ## Demo Video Link
 
@@ -27,12 +27,22 @@ This knowledge base is **foundation for future iterations** to build personalize
 
 ## Architecture Diagram
 
-![ArchitectureDiagram](./documentation/arch-diagram-v3.png)
+![ArchitectureDiagram](./documentation/arch-diagram-v4.png)
+
+## Services
+
+- Cloud Run Service
+    - Handles the UI and user flow
+    - Shows UI for newsletter input
+    - Shows Quiz
+- Agent (Vertex Agent Engine)
+    - Workflow for newsletter ingestion
 
 ## Tech Stack
 
-- Gemini 3.5 Flash
+- Gemini 3.6 Flash
 - Google Agent Development Kit (ADK)
+    - Workflow
 - CloudRun Service
 - Firestore Database
 
@@ -46,24 +56,28 @@ This knowledge base is **foundation for future iterations** to build personalize
 ## Environment Variables
 
 ```
-GEMINI_API_KEY=your-api-key-here
-GOOGLE_CLOUD_PROJECT=your-project-id
-FIRESTORE_DATABASE_ID=your-db-id
-GEMINI_MODEL="gemini-3.5-flash"
+GOOGLE_CLOUD_PROJECT=newsletter-agent-v2
+GOOGLE_CLOUD_LOCATION=global
+FIRESTORE_PROJECT_ID=newsletter-agent-v2
+FIRESTORE_DATABASE_ID=newsletter-agent-v2-db
+GEMINI_MODEL="gemini-3.6-flash"
+GOOGLE_GENAI_USE_VERTEXAI=true
+AGENT_URL=YOUR_AGENT_ENGINE_DEPLOYMENT_URL
 ```
 
-- GEMINI_API_KEY - sign up in Google AI Studio to create API Key
-- GOOGLE_CLOUD_PROJECT - can be found from GCP Console
-- FIRESTORE_DATABASE_ID - Create Firestore database in GCP for this project and set it's ID
+Change the values as per your project's values
 
 ## Local Setup
 
 - Clone repo
 - Do `npm i`
 - Create `.env` file at root with values as described in previous section
-- Run `npm run dev`
+- In Terminal 1, Start the NodeJS service - `npm run dev`
+- In Terminal 2, Start the ADK Agent API Server - `npx adk api_server`
 
-## Deploy to Cloud Run
+## Deployments
+
+### Pre-requisites
 
 ### Step 1
 Set your project as default project in glcoud CLI
@@ -89,7 +103,26 @@ Update the `default` Service Account for your GCP Project with access to the fol
 - Cloud Datastore User
 - Vertex AI User
 
-### Step 6
+### Agent Deployment to Vertex Agent Engine
+
+#### Step 1 - Compile agent.ts file
+
+```bash
+npx esbuild agent.ts --bundle --packages=external --platform=node \
+    --format=esm --outfile=deploy/agent.mjs
+```
+
+#### Step 2 - Deploy to Agent Engine using adk command
+
+```bash
+npx adk deploy agent_engine deploy/agent.mjs \
+	--compile false --bundle false \
+	--region us-central1 \
+	--repository newsletter-agent-v2 \
+	--display_name newsletter-agent-v2
+```
+
+### UI Service - Deployment to Cloud Run
 
 ```bash
 gcloud run deploy newsletter-agent-v2 \
@@ -102,8 +135,6 @@ gcloud run deploy newsletter-agent-v2 \
     --concurrency=1 \
     --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=newsletter-agent-v2,GOOGLE_CLOUD_LOCATION=global,FIRESTORE_DATABASE_ID=newsletter-agent-v2-db,GEMINI_MODEL=gemini-3.6-flash
 ```
-
-In the above command, update YOUR_PROJECT_ID and YOUR_DATABASE_ID with your values
 
 ## Datasources
 
@@ -144,10 +175,12 @@ In the above command, update YOUR_PROJECT_ID and YOUR_DATABASE_ID with your valu
 - ✅ v4 - Feedback Loop
 	- User answers are the feedback from user here
 	- Update knowledge model - based on answers to mcq
-- 🟠 v5 - Tailored Summarization
+- ✅ v5 - ADK native Workflow implementation
+- ✅ v6 - Deployment to Vertex Agent Engine
+- 🟠 v7 - Tailored Summarization
     - Make use of knowledge model
     - Summarize based on knowledge model
 	    - Explain unknown concepts more than known concepts
-- 🟠 v6 - Pre-requisites section to "Summary"
-- 🟠 v7 - Course Creation
-- 🟠 v8 - Misconception Distractions for wrong options in the MCQ
+- 🟠 v8 - Pre-requisites section to "Summary"
+- 🟠 v9 - Course Creation
+- 🟠 v10 - Misconception Distractions for wrong options in the MCQ
