@@ -35,6 +35,13 @@ export async function ingestViaAgent(newsletterText: string): Promise<AgentInges
   }
 
   const body = await res.json()
+
+  // one event per workflow node
+  for (const event of body.output) {
+    const output = JSON.stringify(event.output ?? event.content?.parts?.[0]?.text)
+    console.log("NODE", event.author, "→", output?.slice(0, 100))
+  }
+
   const lastEvent = body.output[body.output.length - 1]
   const text = lastEvent.content?.parts?.[0]?.text
 
